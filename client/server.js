@@ -80,6 +80,75 @@ app.get('/api/remedios/:id', async (req, res) => {
     }
 });
 
+app.put('/api/remedios/:id', async (req, res) => {
+    try {
+        const dados = {
+            ...req.body,
+            id: parseInt(req.params.id)  // <-- adiciona o id ao objeto enviado
+        };
+
+        const response = await new Promise((resolve, reject) => {
+            client.Atualizar(dados, (err, response) => {
+                if (err) reject(err);
+                else resolve(response);
+            });
+        });
+
+        res.json(response);
+    } catch (err) {
+        console.error("Erro na rota PUT:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/remedios/:id/historico', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const response = await new Promise((resolve, reject) => {
+            client.ConsultarHistorico({ id }, (err, response) => {
+                if (err) reject(err);
+                else resolve(response);
+            });
+        });
+        res.json(response);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/remedios/:id/baixa', async (req, res) => {
+    const id = parseInt(req.params.id);
+    const quantidade = req.body.quantidade;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    if (!quantidade || quantidade <= 0) {
+        return res.status(400).json({ error: 'Quantidade inválida' });
+    }
+
+    const dados = {
+        id,
+        quantidade
+    };
+
+    try {
+        const response = await new Promise((resolve, reject) => {
+            client.DarBaixaEstoque(dados, (err, response) => {
+                if (err) reject(err);
+                else resolve(response);
+            });
+        });
+
+        res.json(response);
+    } catch (err) {
+        console.error("Erro ao dar baixa no estoque:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 
 app.listen(PORT, () => {
     console.log(`Servidor web rodando em http://localhost:${PORT}`);
